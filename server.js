@@ -64,10 +64,7 @@ app.post("/login", (req, res) => {
 ========================= */
 app.get("/getposts", (req, res) => {
   db.query("SELECT * FROM users", (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).send(err);
-    }
+    if (err) return res.status(500).send(err);
     res.send(result);
   });
 });
