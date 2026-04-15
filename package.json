@@ -14,8 +14,9 @@
     "body-parser": "^2.2.2",
     "bootstrap": "^5.3.8",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mysql": "^2.18.1",
+    "mysql2": "^3.22.0",
     "react-router-dom": "^6.30.3"
   }
 }
