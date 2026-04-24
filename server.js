@@ -32,35 +32,68 @@ app.get("/", (req, res) => {
 });
 
 /* =========================
-   LOGIN
+   LOGIN (UPDATED)
 ========================= */
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  const sql = "SELECT * FROM users WHERE email=? AND password=?";
+  // Validation
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email and password required"
+    });
+  }
 
-  db.query(sql, [email, password], (err, result) => {
+  const sql = "SELECT * FROM users WHERE email=?";
+
+  db.query(sql, [email], (err, result) => {
     if (err) {
       console.log(err);
-      return res.status(500).send(err);
+      return res.status(500).json({
+        message: "Server error"
+      });
     }
 
-    if (result.length > 0) {
-      res.send(result[0]);
-    } else {
-      res.send({ message: "Invalid credentials" });
+    // User not found
+    if (result.length === 0) {
+      return res.status(401).json({
+        message: "Invalid email or password"
+      });
     }
+
+    const user = result[0];
+
+    // Password check (plain for now)
+    if (user.password !== password) {
+      return res.status(401).json({
+        message: "Invalid email or password"
+      });
+    }
+
+    // ✅ SUCCESS (no password returned)
+    res.json({
+      message: "Login successful",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   });
 });
 
 /* =========================
-   GET ALL USERS
+   GET ALL USERS (SAFE)
 ========================= */
 app.get("/getposts", (req, res) => {
-  db.query("SELECT * FROM users", (err, result) => {
-    if (err) return res.status(500).send(err);
-    res.send(result);
-  });
+  db.query(
+    "SELECT id, name, email, role FROM users",
+    (err, result) => {
+      if (err) return res.status(500).send(err);
+      res.json(result);
+    }
+  );
 });
 
 /* =========================
@@ -68,14 +101,11 @@ app.get("/getposts", (req, res) => {
 ========================= */
 app.get("/getpost/:id", (req, res) => {
   db.query(
-    "SELECT * FROM users WHERE id=?",
+    "SELECT id, name, email, role FROM users WHERE id=?",
     [req.params.id],
     (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).send(err);
-      }
-      res.send(result);
+      if (err) return res.status(500).send(err);
+      res.json(result);
     }
   );
 });
@@ -89,13 +119,9 @@ app.post("/addpost", (req, res) => {
   const sql =
     "INSERT INTO users (name,email,password,role) VALUES (?,?,?,?)";
 
-  db.query(sql, [name, email, password, role], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).send(err);
-    }
-
-    res.send("User Added");
+  db.query(sql, [name, email, password, role], (err) => {
+    if (err) return res.status(500).send(err);
+    res.json({ message: "User Added" });
   });
 });
 
@@ -107,13 +133,9 @@ app.put("/updatepost/:id", (req, res) => {
 
   const sql = "UPDATE users SET name=?,email=?,role=? WHERE id=?";
 
-  db.query(sql, [name, email, role, req.params.id], (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).send(err);
-    }
-
-    res.send("User Updated");
+  db.query(sql, [name, email, role, req.params.id], (err) => {
+    if (err) return res.status(500).send(err);
+    res.json({ message: "User Updated" });
   });
 });
 
@@ -124,13 +146,9 @@ app.delete("/deletepost/:id", (req, res) => {
   db.query(
     "DELETE FROM users WHERE id=?",
     [req.params.id],
-    (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).send(err);
-      }
-
-      res.send("User Deleted");
+    (err) => {
+      if (err) return res.status(500).send(err);
+      res.json({ message: "User Deleted" });
     }
   );
 });
@@ -140,4 +158,8 @@ app.delete("/deletepost/:id", (req, res) => {
 ========================= */
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
+});
+
+app.get("/login", (req, res) => {
+  res.send("LOGIN ROUTE LIVE ✅");
 });
